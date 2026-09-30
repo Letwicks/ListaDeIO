@@ -1,0 +1,20 @@
+# Build do PyInstaller
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Dados de cliente e saidas geradas - nunca versionar
+*.L5X
+*.l5x
+*.ACD
+*.acd
+*.xlsx
+*.xls
+*.csv
+Alarms.xml
