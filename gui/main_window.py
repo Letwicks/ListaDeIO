@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QThread
@@ -263,7 +265,11 @@ class MainWindow(QMainWindow):
 
     def on_open_folder(self):
         if self.last_output_path:
-            os.startfile(os.path.dirname(self.last_output_path))
+            pasta = os.path.dirname(self.last_output_path)
+            if sys.platform == "win32":
+                os.startfile(pasta)
+            else:
+                subprocess.Popen(["xdg-open", pasta])
 
 
 INSTRUCTIONS_HTML = """

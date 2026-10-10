@@ -10,6 +10,7 @@ from gui.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
+    app.setDesktopFileName("autolinx-listadeio")  # Linux: liga a janela ao .desktop (ícone na barra)
     theme.apply_theme(app)
     app.setWindowIcon(brand.app_icon())
     window = MainWindow()
