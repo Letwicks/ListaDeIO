@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Gera app.ico (identidade Autolinx) a partir de brand.app_icon(), para uso no PyInstaller."""
+"""Gera app.ico a partir de brand.app_icon(), para uso no PyInstaller."""
 import os
 import shutil
 from pathlib import Path

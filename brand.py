@@ -1,14 +1,13 @@
-"""Marca da Autolinx Automação: o logotipo, embutido no próprio código.
+"""Marca da Autolinx Automação: o logotipo e o ícone do app, embutidos no código.
 
 O símbolo vem de https://autolinx.me com o fundo recortado. Ele foi desenhado
 para fundo escuro — o arco superior é branco e desapareceria sobre fundo claro —,
-por isso há duas formas de uso:
+por isso só é usado solto na faixa navy do cabeçalho (:func:`logo_pixmap`).
 
-* :func:`logo_pixmap` — o símbolo solto, para a faixa navy do cabeçalho;
-* :func:`logo_badge` — o símbolo dentro de um chip navy arredondado, para
-  diálogos de fundo claro.
+O ícone do app (:func:`app_icon`) é próprio desta ferramenta: um cartão de I/O
+de CLP sobre o chip navy, desenhado com QPainter.
 
-Fica embutido em base64 (e não como arquivo em disco) para que a ferramenta
+O logotipo fica embutido em base64 (e não como arquivo em disco) para que a ferramenta
 continue inteira quando distribuída como executável único.
 """
 
@@ -17,14 +16,18 @@ from __future__ import annotations
 from base64 import b64decode
 
 from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap
+from PyQt6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPixmap
 
 AUTOLINX_SITE = "https://autolinx.me"
 AUTOLINX_NOME = "Autolinx Automação"
 AUTOLINX_SLOGAN = "Automação Industrial que impulsiona resultados"
 
-# Navy da identidade, o mesmo do tema: fundo sobre o qual o símbolo foi desenhado.
+# Cores da identidade, as mesmas do tema.
 _NAVY = QColor("#0a3b6d")
+_NAVY_CLARO = QColor("#0f4f8f")
+_AZUL = QColor("#1a73e8")
+_VERDE = QColor("#00a544")
+_CINZA = QColor("#c7d0db")
 
 _LOGO_PNG = """
 iVBORw0KGgoAAAANSUhEUgAAAMMAAADACAYAAAC569cEAABqeklEQVR42u19e1xUZf7/53nO3BhgGJA7OKCohSiGYFaEl8xq
@@ -428,35 +431,53 @@ def logo_pixmap(height: int, ratio: float = 1.0) -> QPixmap:
     return pix
 
 
-def logo_badge(size: int, ratio: float = 1.0) -> QPixmap:
-    """Símbolo sobre um chip navy arredondado, para uso em fundo claro."""
-    lado = max(1, round(size * ratio))
-    chip = QPixmap(lado, lado)
-    chip.fill(Qt.GlobalColor.transparent)
+def icone_pixmap(size: int, ratio: float = 1.0) -> QPixmap:
+    """Ícone do app: cartão de I/O (LEDs verdes = entradas, azuis = saídas) no chip navy.
 
-    painter = QPainter(chip)
+    Desenhado numa grade de 256×256 e escalado para ``size``.
+    """
+    lado = max(1, round(size * ratio))
+    pix = QPixmap(lado, lado)
+    pix.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(pix)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(_NAVY)
-    painter.drawRoundedRect(QRectF(0, 0, lado, lado), lado * 0.22, lado * 0.22)
+    painter.scale(lado / 256, lado / 256)
 
-    simbolo = _logo_original().scaledToHeight(round(lado * 0.78), Qt.TransformationMode.SmoothTransformation)
-    painter.drawPixmap(
-        round((lado - simbolo.width()) / 2), round((lado - simbolo.height()) / 2), simbolo
-    )
+    fundo = QLinearGradient(0, 8, 0, 248)
+    fundo.setColorAt(0, _NAVY_CLARO)
+    fundo.setColorAt(1, _NAVY)
+    painter.setBrush(fundo)
+    painter.drawRoundedRect(QRectF(8, 8, 240, 240), 52, 52)
+
+    painter.setBrush(QColor("#ffffff"))
+    painter.drawRoundedRect(QRectF(60, 36, 136, 184), 14, 14)
+
+    # Cabeçalho azul do cartão: só os cantos de cima arredondados.
+    painter.setBrush(_AZUL)
+    painter.drawRoundedRect(QRectF(60, 36, 136, 34), 14, 14)
+    painter.drawRect(QRectF(60, 56, 136, 14))
+
+    for y in (92, 117, 142, 167, 192):
+        for x, led in ((84, _VERDE), (148, _AZUL)):
+            painter.setBrush(led)
+            painter.drawEllipse(QRectF(x - 9, y - 9, 18, 18))
+            painter.setBrush(_CINZA)
+            painter.drawRoundedRect(QRectF(x + 15, y - 4, 22, 8), 4, 4)
     painter.end()
 
-    chip.setDevicePixelRatio(ratio)
-    return chip
+    pix.setDevicePixelRatio(ratio)
+    return pix
 
 
 def app_icon() -> QIcon:
-    """Ícone da aplicação: o chip navy da Autolinx, em várias resoluções.
+    """Ícone da aplicação em várias resoluções.
 
-    Usa o chip (e não o símbolo solto) porque o ícone aparece sobre a barra de
-    tarefas e o Explorer, de fundo claro ou escuro conforme o tema do Windows.
+    Tem fundo próprio (o chip navy) porque aparece sobre a barra de tarefas e o
+    Explorer, de fundo claro ou escuro conforme o tema do sistema.
     """
     icon = QIcon()
     for tamanho in (16, 24, 32, 48, 64, 128, 256):
-        icon.addPixmap(logo_badge(tamanho))
+        icon.addPixmap(icone_pixmap(tamanho))
     return icon
