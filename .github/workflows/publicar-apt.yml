@@ -1,0 +1,25 @@
+name: Publicar no apt
+
+# Modelo: copie para .github/workflows/ de cada repositório -src e ajuste APP (pasta em apps/ do
+# Letwicks/autolinx-repo). Ao publicar uma release estável, pede ao autolinx-repo que gere o
+# pacote dessa tag e o coloque em https://repo.autolinx.me.
+on:
+  release:
+    types: [published]
+
+jobs:
+  publicar:
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Avisar o autolinx-repo
+        env:
+          GH_TOKEN: ${{ secrets.AUTOLINX_REPO_TOKEN }}
+          APP: listadeio
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh api repos/Letwicks/autolinx-repo/dispatches \
+            -f event_type=publicar-app \
+            -f "client_payload[app]=$APP" \
+            -f "client_payload[ref]=$TAG"
+          echo "Pedido enviado: $APP $TAG"

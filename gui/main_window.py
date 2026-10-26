@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtCore import Qt, QThread, QStandardPaths
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel,
@@ -14,9 +14,25 @@ from PyQt6.QtWidgets import (
 
 import brand
 from gui.worker import Worker
+from version import VERSAO
 
-APP_TITLE = "Lista de I/O — Rockwell / Studio 5000"
+APP_TITLE = f"Lista de I/O {VERSAO} — Rockwell / Studio 5000"
 APP_TAGLINE = "Lista de I/O a partir de L5X — módulos e rastreamento por rotina"
+
+
+def _pasta_padrao():
+    """Pasta onde os diálogos de abrir e salvar começam, enquanto nenhuma foi escolhida.
+
+    Pelo fonte ou no Windows é None: os diálogos seguem a pasta atual, como sempre foi.
+    Instalado pelo apt, a pasta atual pode ser o código em /opt (só leitura), então usa a
+    pasta Documentos do usuário, ou a pasta pessoal se ela não existir.
+    """
+    if os.environ.get("AUTOLINX_PACOTE") == "apt":
+        documentos = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
+        if documentos and Path(documentos).is_dir():
+            return Path(documentos)
+        return Path.home()
+    return None
 
 
 class MainWindow(QMainWindow):
@@ -156,7 +172,9 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------- ações
 
     def on_select_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Selecionar pasta com os arquivos L5X")
+        folder = QFileDialog.getExistingDirectory(
+            self, "Selecionar pasta com os arquivos L5X", str(_pasta_padrao() or "")
+        )
         if not folder:
             return
         self.current_folder = folder
@@ -208,7 +226,8 @@ class MainWindow(QMainWindow):
             return
 
         default_name = "Lista_IO_Completa.xlsx"
-        default_path = str(Path(self.current_folder) / default_name) if self.current_folder else default_name
+        pasta = self.current_folder or _pasta_padrao()
+        default_path = str(Path(pasta) / default_name) if pasta else default_name
         out_path, _ = QFileDialog.getSaveFileName(
             self, "Salvar planilha como", default_path, "Excel (*.xlsx)"
         )
